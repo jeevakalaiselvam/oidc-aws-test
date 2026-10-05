@@ -1,0 +1,30 @@
+name: oidc-test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  aws-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::990447289955:role/poc-github-oidc-role
+          aws-region: ap-south-1
+
+      - name: Who am I
+        run: aws sts get-caller-identity
+
+      - name: List buckets (allowed)
+        run: aws s3api list-buckets --query 'Buckets[].Name'
+
+      - name: List IAM users (should be denied)
+        run: aws iam list-users
+        continue-on-error: true
